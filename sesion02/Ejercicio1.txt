@@ -1,0 +1,81 @@
+main.cpp
+#include <iostream>
+#include "funciones.h"
+
+using namespace std;
+
+int main() {
+
+    double numeros[10];
+
+    for (int i = 0; i < 10; i++) {
+        cout << "Ingrese un numero: ";
+        cin >> numeros[i];
+    }
+
+    cout << "La suma es: " << sumaElementos(numeros) << endl;
+    cout << "El promedio es: " << promedio(numeros) << endl;
+    cout << "El mayor es: " << mayor(numeros) << endl;
+    cout << "El menor es: " << menor(numeros) << endl;
+
+    return 0;
+}
+
+funciones.h
+
+#ifndef OPERACIONES_H
+#define OPERACIONES_H
+
+double promedio(double numeros[]);
+double mayor(double numeros[]);
+double menor(double numeros[]);
+double sumaElementos(double numeros[]);
+
+#endif
+
+operaciones.cpp
+#include "funciones.h"
+
+double promedio(double numeros[]) {
+    double suma = 0;
+
+    for (int i = 0; i < 10; i++) {
+        suma += numeros[i];
+    }
+
+    return suma / 10;
+}
+
+double mayor(double numeros[]) {
+    double mayor = numeros[0];
+
+    for (int i = 1; i < 10; i++) {
+        if (numeros[i] > mayor) {
+            mayor = numeros[i];
+        }
+    }
+
+    return mayor;
+}
+
+double menor(double numeros[]) {
+    double menor = numeros[0];
+
+    for (int i = 1; i < 10; i++) {
+        if (numeros[i] < menor) {
+            menor = numeros[i];
+        }
+    }
+
+    return menor;
+}
+
+double sumaElementos(double numeros[]) {
+    double n = 0;
+
+    for (int i = 0; i < 10; i++) {
+        n += numeros[i];
+    }
+
+    return n;
+}

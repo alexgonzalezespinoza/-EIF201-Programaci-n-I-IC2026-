@@ -1,0 +1,58 @@
+main.cpp
+#include <iostream>
+#include "inverso.h"
+
+using namespace std;
+
+int main() {
+
+    int normal[20], inVerso[20];
+    int n = 0;
+
+    cout << "Digite cuantos numeros tendra el arreglo: ";
+    cin >> n;
+
+    if (n > 20 || n < 1) {
+        cout << "Solo se permiten numeros del 1 al 20" << endl;
+        return 0;
+    }
+
+    for (int i = 0; i < n; i++) {
+        cout << "Digite el numero: ";
+        cin >> normal[i];
+    }
+
+    inverso(normal, inVerso, n);
+
+    cout << "Arreglo normal: ";
+    for (int i = 0; i < n; i++) {
+        cout << normal[i] << " ";
+    }
+
+    cout << endl;
+
+    cout << "Arreglo inverso: ";
+    for (int i = 0; i < n; i++) {
+        cout << inVerso[i] << " ";
+    }
+
+    return 0;
+}
+inverso.h
+
+#ifndef INVERSO_H
+#define INVERSO_H
+void inverso(int normal[], int inVerso[], int n);
+
+#endif
+
+inverso.cpp
+#include "inverso.h"
+
+void inverso(int normal[], int inVerso[], int n) {
+
+    for (int i = 0; i < n; i++) {
+        inVerso[i] = normal[n - 1 - i];
+    }
+
+}
