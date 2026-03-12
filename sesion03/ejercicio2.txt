@@ -1,0 +1,152 @@
+main.cpp
+#include <iostream>
+#include "paquetes.h"
+
+using namespace std;
+
+int main()
+{
+    int cantidad;
+
+    cout << "Cantidad de paquetes: ";
+    cin >> cantidad;
+
+    double* pesos = crearRegistro(cantidad);
+
+    if (pesos == nullptr)
+    {
+        cout << "Cantidad invalida.\n";
+        return 0;
+    }
+
+    ingresarPesos(pesos, cantidad);
+
+    double total = calcularPesoTotal(pesos, cantidad);
+
+    double promedio = total / cantidad;
+
+    cout << "\nPeso total: " << total << endl;
+    cout << "Promedio de peso: " << promedio << endl;
+
+    double limite;
+
+    cout << "\nIngrese el limite de peso: ";
+    cin >> limite;
+
+    int sobre = contarSobreLimite(pesos, cantidad, limite);
+
+    cout << "Paquetes sobre el limite: " << sobre << endl;
+
+    const double* masPesado = buscarMasPesado(pesos, cantidad);
+
+    cout << "Paquete mas pesado: " << *masPesado << endl;
+
+    delete[] pesos;
+
+    return 0;
+}
+
+paquetes.h
+
+#ifndef PAQUETES_H
+#define PAQUETES_H
+
+#include <iostream>
+
+
+double* crearRegistro(int cantidad);
+
+
+void ingresarPesos(double* pesos, int cantidad);
+
+
+double calcularPesoTotal(const double* pesos, int cantidad);
+
+
+int contarSobreLimite(const double* pesos, int cantidad, double limite);
+
+
+const double* buscarMasPesado(const double* pesos, int cantidad);
+
+#endif
+
+paquetes.cpp 
+#include "paquetes.h"
+
+using namespace std;
+
+double* crearRegistro(int cantidad)
+{
+    if (cantidad <= 0)
+    {
+        return nullptr;
+    }
+
+    double* pesos = new double[cantidad];
+
+    return pesos;
+}
+
+void ingresarPesos(double* pesos, int cantidad)
+{
+    for (int i = 0; i < cantidad; i++)
+    {
+        double peso;
+
+        do
+        {
+            cout << "Ingrese el peso del paquete " << i + 1 << ": ";
+            cin >> peso;
+
+            if (peso <= 0)
+            {
+                cout << "El peso debe ser mayor que 0.\n";
+            }
+
+        } while (peso <= 0);
+
+        pesos[i] = peso;
+    }
+}
+
+double calcularPesoTotal(const double* pesos, int cantidad)
+{
+    double total = 0;
+
+    for (int i = 0; i < cantidad; i++)
+    {
+        total += pesos[i];
+    }
+
+    return total;
+}
+
+int contarSobreLimite(const double* pesos, int cantidad, double limite)
+{
+    int contador = 0;
+
+    for (int i = 0; i < cantidad; i++)
+    {
+        if (pesos[i] > limite)
+        {
+            contador++;
+        }
+    }
+
+    return contador;
+}
+
+const double* buscarMasPesado(const double* pesos, int cantidad)
+{
+    int pos = 0;
+
+    for (int i = 1; i < cantidad; i++)
+    {
+        if (pesos[i] > pesos[pos])
+        {
+            pos = i;
+        }
+    }
+
+    return &pesos[pos];
+}
