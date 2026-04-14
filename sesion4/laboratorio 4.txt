@@ -1,0 +1,554 @@
+main.cpp 
+#include "Squad.h"
+#include <iostream>
+#include <sstream>
+
+using namespace EIF201;
+
+Squad::Squad(std::string name, int capacity)
+    : name(name),
+    capacity(capacity > 0 ? capacity : 1),
+    count(0) {
+    warriors = new Warrior * [this->capacity];
+    for (int i = 0; i < this->capacity; i++) {
+        warriors[i] = nullptr;
+    }
+}
+
+Squad::~Squad() {
+   
+    for (int i = 0; i < count; i++) {
+        delete warriors[i];  
+        warriors[i] = nullptr;
+    }
+    delete[] warriors;
+    warriors = nullptr;
+}
+
+void Squad::expand() {
+    int newCap = capacity * 2;
+    Warrior** temp = new Warrior * [newCap];
+    for (int i = 0; i < count; i++) {
+        temp[i] = warriors[i]; 
+    }
+    for (int i = count; i < newCap; i++) {
+        temp[i] = nullptr;
+    }
+    delete[] warriors;  
+    warriors = temp;
+    capacity = newCap;
+}
+
+Warrior* Squad::recruit(std::string name, std::string cls,
+    int atk, int def, int hp, int maxSkills) {
+    if (count >= capacity) expand();
+    Warrior* w = new Warrior(name, cls, atk, def, hp, maxSkills);
+    warriors[count++] = w;
+    return w; 
+}
+
+bool Squad::dismiss(std::string name) {
+    for (int i = 0; i < count; i++) {
+        if (warriors[i]->getName() == name) {
+            delete warriors[i];  
+           
+            for (int j = i; j < count - 1; j++) {
+                warriors[j] = warriors[j + 1];
+            }
+            warriors[count - 1] = nullptr;
+            count--;
+            return true;
+        }
+    }
+    return false;
+}
+
+int Squad::totalPower() const {
+    int total = 0;
+    for (int i = 0; i < count; i++) {
+        total += warriors[i]->calculatePower();
+    }
+    return total;
+}
+
+void Squad::showSquad() const {
+    std::cout << "\nSquad: " << name
+        << " (" << count << " warriors)" << std::endl;
+    for (int i = 0; i < count; i++) {
+        std::cout << "  " << warriors[i]->toString() << std::endl;
+    }
+    std::cout << "Total Power: " << totalPower() << std::endl;
+}
+
+int Squad::getCount() const { return count; }
+std::string Squad::getName() const { return name; }
+
+Warrior** Squad::getByClass(std::string cls, int& resultCount) const {
+   
+    resultCount = 0;
+    for (int i = 0; i < count; i++) {
+        if (warriors[i]->getCombatClass() == cls) resultCount++;
+    }
+    if (resultCount == 0) return nullptr;
+
+   
+    Warrior** result = new Warrior * [resultCount];
+    int index = 0;
+    for (int i = 0; i < count; i++) {
+        if (warriors[i]->getCombatClass() == cls) {
+            result[index++] = warriors[i];
+        }
+    }
+    return result;
+}
+
+void Squad::sortByPower() {
+   
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = i + 1; j < count; j++) {
+            if (warriors[j]->calculatePower() > warriors[i]->calculatePower()) {
+                Warrior* temp = warriors[i];
+                warriors[i] = warriors[j];
+                warriors[j] = temp;
+            }
+        }
+    }
+}
+
+std::string Squad::simulateBattle(const Squad& enemy) const {
+   
+    int p1 = totalPower();
+    int p2 = enemy.totalPower(); 
+
+    std::string result;
+    if (p1 > p2)      result = "Victoria de " + name;
+    else if (p2 > p1) result = "Victoria de " + enemy.getName();
+    else              result = "Empate";
+
+    std::ostringstream oss;
+    oss << name << " (" << p1 << ") vs "
+        << enemy.getName() << " (" << p2 << ") -> " << result;
+    return oss.str();
+}
+
+skill.h 
+#ifndef SKILL_H
+#define SKILL_H
+
+#include <string>
+
+namespace EIF201 {
+
+    class Skill {
+    private:
+        std::string name;
+        std::string damageType;  
+        int power;              
+        int energyCost;          
+
+        int clampRange(int value, int min, int max);  
+        bool isValidType(std::string type);
+
+    public:
+        Skill(std::string name, std::string damageType, int power, int energyCost);
+
+        ~Skill();
+
+        std::string getName() const;
+        std::string getDamageType() const;
+        int getPower() const;
+        int getEnergyCost() const;
+
+        int calculateEffect() const;
+
+        std::string toString() const;
+    };
+
+}
+
+#endif
+skill.cpp
+#include "Skill.h"
+#include <sstream>
+
+using namespace EIF201;
+
+int Skill::clampRange(int value, int mn, int mx) {
+    if (value < mn) return mn;
+    if (value > mx) return mx;
+    return value;
+}
+
+bool Skill::isValidType(std::string type) {
+    return type == "Physical" || type == "Magical"
+        || type == "Healing";
+}
+
+Skill::Skill(std::string name, std::string damageType,
+    int power, int energyCost)
+    : name(name.empty() ? "Unnamed" : name),
+    damageType(isValidType(damageType)
+        ? damageType : "Physical"),
+    power(clampRange(power, 1, 200)),
+    energyCost(clampRange(energyCost, 0, 100)) {
+}
+
+Skill::~Skill() {
+   
+}
+
+std::string Skill::getName() const { return name; }
+std::string Skill::getDamageType() const { return damageType; }
+int Skill::getPower() const { return power; }
+int Skill::getEnergyCost() const { return energyCost; }
+
+int Skill::calculateEffect() const {
+    if (damageType == "Magical")
+        return (int)(power * 1.5);
+    if (damageType == "Healing")
+        return (int)(power * 0.8);
+    return power;  
+}
+
+std::string Skill::toString() const {
+    
+    std::ostringstream oss;
+    oss << name << " (" << damageType
+        << ", Poder:" << power
+        << ", Efecto:" << calculateEffect()
+        << ", Costo:" << energyCost << ")";
+    return oss.str();
+}
+warrior.h
+#ifndef WARRIOR_H
+#define WARRIOR_H
+
+#include "Skill.h"
+#include <string>
+
+namespace EIF201 {
+
+    class Warrior {
+    private:
+        std::string name;
+        std::string combatClass;
+        int attack;
+        int defense;
+        int health;
+
+        Skill** skills;
+        int skillCount;
+        int maxSkills;
+
+        int clampRange(int value, int min, int max);
+        bool isValidClass(std::string cls);
+
+    public:
+        Warrior(std::string name, std::string combatClass,
+            int attack, int defense, int health,
+            int maxSkills);
+        ~Warrior();
+
+        std::string getName() const;
+        std::string getCombatClass() const;
+        int getAttack() const;
+        int getDefense() const;
+        int getHealth() const;
+        int getSkillCount() const;
+
+        bool learnSkill(std::string name, std::string type,
+            int power, int cost);
+        bool hasSkill(std::string name) const;
+        int totalSkillEffect() const;
+
+        int calculatePower() const;
+
+        std::string toString() const;
+        void showSkills() const;
+    };
+
+}
+
+#endif
+warrior.cpp
+#include "Warrior.h"
+#include <sstream>
+#include <iostream>
+
+using namespace EIF201;
+
+int Warrior::clampRange(int value, int mn, int mx) {
+    if (value < mn) return mn;
+    if (value > mx) return mx;
+    return value;
+}
+
+bool Warrior::isValidClass(std::string cls) {
+    return cls == "Tank" || cls == "Assassin"
+        || cls == "Mage" || cls == "Support";
+}
+
+Warrior::Warrior(std::string name, std::string combatClass,
+    int attack, int defense, int health,
+    int maxSkills)
+    : name(name.empty() ? "Unknown" : name),
+    combatClass(isValidClass(combatClass)
+        ? combatClass : "Support"),
+    attack(clampRange(attack, 1, 100)),
+    defense(clampRange(defense, 1, 100)),
+    health(clampRange(health, 1, 1000)),
+    skillCount(0),
+    maxSkills(maxSkills > 0 ? maxSkills : 3) {
+
+
+    skills = new Skill * [this->maxSkills];
+    for (int i = 0; i < this->maxSkills; i++) {
+        skills[i] = nullptr;
+    }
+}
+
+Warrior::~Warrior() {
+
+    for (int i = 0; i < skillCount; i++) {
+        delete skills[i];
+        skills[i] = nullptr;
+    }
+    delete[] skills;
+    skills = nullptr;
+}
+
+bool Warrior::learnSkill(std::string name, std::string type,
+    int power, int cost) {
+
+
+    if (hasSkill(name)) return false;
+
+    if (skillCount >= maxSkills) return false;
+
+    skills[skillCount] = new Skill(name, type, power, cost);
+    skillCount++;
+    return true;
+}
+
+bool Warrior::hasSkill(std::string name) const {
+    for (int i = 0; i < skillCount; i++) {
+        if (skills[i]->getName() == name)
+            return true;
+    }
+    return false;
+}
+
+int Warrior::totalSkillEffect() const {
+    int sum = 0;
+    for (int i = 0; i < skillCount; i++)
+        sum += skills[i]->calculateEffect();
+    return sum;
+}
+
+
+int Warrior::calculatePower() const {
+
+    return (attack * 2) + defense + (health / 10) + totalSkillEffect();
+}
+
+std::string Warrior::getName() const { return name; }
+std::string Warrior::getCombatClass() const {
+    return combatClass;
+}
+int Warrior::getAttack() const { return attack; }
+int Warrior::getDefense() const { return defense; }
+int Warrior::getHealth() const { return health; }
+int Warrior::getSkillCount() const { return skillCount; }
+
+std::string Warrior::toString() const {
+    std::ostringstream oss;
+    oss << "[" << combatClass << "] " << name
+        << " | ATK:" << attack << " DEF:" << defense
+        << " HP:" << health << " | Skills:"
+        << skillCount << "/" << maxSkills
+        << " | Power:" << calculatePower();
+    return oss.str();
+}
+
+void Warrior::showSkills() const {
+    std::cout << "  Skills of " << name
+        << ":" << std::endl;
+    for (int i = 0; i < skillCount; i++) {
+        std::cout << "    - "
+            << skills[i]->toString()
+            << std::endl;
+    }
+}
+squad.h
+#ifndef SQUAD_H
+#define SQUAD_H
+
+#include "Warrior.h"
+#include <string>
+
+namespace EIF201 {
+
+    class Squad {
+    private:
+        std::string name;
+        Warrior** warriors;
+        int capacity;
+        int count;
+
+        void expand();
+
+    public:
+        Squad(std::string name, int capacity);
+        ~Squad();
+
+
+        Warrior* recruit(std::string name, std::string cls,
+            int atk, int def, int hp, int maxSkills);
+        bool dismiss(std::string name);
+        int totalPower() const;
+        void showSquad() const;
+        int getCount() const;
+        std::string getName() const;
+
+
+        Warrior** getByClass(std::string cls, int& resultCount) const;
+        void sortByPower();
+        std::string simulateBattle(const Squad& enemy) const;
+    };
+
+}
+
+#endif
+squad.cpp
+#include "Squad.h"
+#include <iostream>
+#include <sstream>
+
+using namespace EIF201;
+
+Squad::Squad(std::string name, int capacity)
+    : name(name),
+    capacity(capacity > 0 ? capacity : 1),
+    count(0) {
+    warriors = new Warrior * [this->capacity];
+    for (int i = 0; i < this->capacity; i++) {
+        warriors[i] = nullptr;
+    }
+}
+
+Squad::~Squad() {
+   
+    for (int i = 0; i < count; i++) {
+        delete warriors[i];  
+        warriors[i] = nullptr;
+    }
+    delete[] warriors;
+    warriors = nullptr;
+}
+
+void Squad::expand() {
+    int newCap = capacity * 2;
+    Warrior** temp = new Warrior * [newCap];
+    for (int i = 0; i < count; i++) {
+        temp[i] = warriors[i]; 
+    }
+    for (int i = count; i < newCap; i++) {
+        temp[i] = nullptr;
+    }
+    delete[] warriors;  
+    warriors = temp;
+    capacity = newCap;
+}
+
+Warrior* Squad::recruit(std::string name, std::string cls,
+    int atk, int def, int hp, int maxSkills) {
+    if (count >= capacity) expand();
+    Warrior* w = new Warrior(name, cls, atk, def, hp, maxSkills);
+    warriors[count++] = w;
+    return w; 
+}
+
+bool Squad::dismiss(std::string name) {
+    for (int i = 0; i < count; i++) {
+        if (warriors[i]->getName() == name) {
+            delete warriors[i];  
+           
+            for (int j = i; j < count - 1; j++) {
+                warriors[j] = warriors[j + 1];
+            }
+            warriors[count - 1] = nullptr;
+            count--;
+            return true;
+        }
+    }
+    return false;
+}
+
+int Squad::totalPower() const {
+    int total = 0;
+    for (int i = 0; i < count; i++) {
+        total += warriors[i]->calculatePower();
+    }
+    return total;
+}
+
+void Squad::showSquad() const {
+    std::cout << "\nSquad: " << name
+        << " (" << count << " warriors)" << std::endl;
+    for (int i = 0; i < count; i++) {
+        std::cout << "  " << warriors[i]->toString() << std::endl;
+    }
+    std::cout << "Total Power: " << totalPower() << std::endl;
+}
+
+int Squad::getCount() const { return count; }
+std::string Squad::getName() const { return name; }
+
+Warrior** Squad::getByClass(std::string cls, int& resultCount) const {
+   
+    resultCount = 0;
+    for (int i = 0; i < count; i++) {
+        if (warriors[i]->getCombatClass() == cls) resultCount++;
+    }
+    if (resultCount == 0) return nullptr;
+
+   
+    Warrior** result = new Warrior * [resultCount];
+    int index = 0;
+    for (int i = 0; i < count; i++) {
+        if (warriors[i]->getCombatClass() == cls) {
+            result[index++] = warriors[i];
+        }
+    }
+    return result;
+}
+
+void Squad::sortByPower() {
+   
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = i + 1; j < count; j++) {
+            if (warriors[j]->calculatePower() > warriors[i]->calculatePower()) {
+                Warrior* temp = warriors[i];
+                warriors[i] = warriors[j];
+                warriors[j] = temp;
+            }
+        }
+    }
+}
+
+std::string Squad::simulateBattle(const Squad& enemy) const {
+   
+    int p1 = totalPower();
+    int p2 = enemy.totalPower(); 
+
+    std::string result;
+    if (p1 > p2)      result = "Victoria de " + name;
+    else if (p2 > p1) result = "Victoria de " + enemy.getName();
+    else              result = "Empate";
+
+    std::ostringstream oss;
+    oss << name << " (" << p1 << ") vs "
+        << enemy.getName() << " (" << p2 << ") -> " << result;
+    return oss.str();
+}
+
