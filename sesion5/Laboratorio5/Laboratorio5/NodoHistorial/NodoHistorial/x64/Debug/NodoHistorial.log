@@ -1,0 +1,8 @@
+﻿  main.cpp
+  NodoDoble.cpp
+C:\Users\Alex1\Downloads\Laboratorio5 (2) (1)\Laboratorio5\NodoHistorial\main.cpp(79,5): error C2065: 'cout': identificador no declarado
+C:\Users\Alex1\Downloads\Laboratorio5 (2) (1)\Laboratorio5\NodoHistorial\NodoDoble.cpp(5,18): error C1075: "{": no se encontró ningún token coincidente
+  NodoHistorial.cpp
+  NodoLocutor.cpp
+  NodoRotacionCircular.cpp
+  Generando código...
